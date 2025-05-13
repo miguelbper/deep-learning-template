@@ -3,7 +3,6 @@ from pathlib import Path
 
 import numpy as np
 import sklearn
-from tabulate import tabulate
 
 Estimator = sklearn.base.BaseEstimator
 Metric = Callable[[np.ndarray, np.ndarray], float]
@@ -39,13 +38,6 @@ class Model:
             metric_name = f"{prefix}{metric.__name__}"
             metric_value = metric(y, y_pred)
             results[metric_name] = metric_value
-
-        # Pretty print results
-        table = [[name, f"{value:.4f}"] for name, value in results.items()]
-        print(f"\n{prefix.title()} Metrics:")
-        print(tabulate(table, headers=["Metric", "Value"], tablefmt="grid"))
-        print()  # Add newline for better readability
-
         return results
 
     def validate(self, X: np.ndarray, y: np.ndarray) -> dict[str, float]:

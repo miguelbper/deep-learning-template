@@ -1,0 +1,49 @@
+import logging
+
+from hydra_zen import store, zen
+
+from sklearn_template.configs import TrainCfg
+from sklearn_template.core.datamodule import DataModule
+from sklearn_template.core.model import Model
+from sklearn_template.core.trainer import Trainer
+
+log = logging.getLogger(__name__)
+
+
+def train(data: DataModule, model: Model, trainer: Trainer, monitor: str) -> float | None:
+    """Train, validate and test a scikit-learn model.
+
+    Args:
+        data (DataModule): The data module containing training, validation and test data.
+        model (Model): The model to train.
+        trainer (Trainer): The trainer instance.
+        ckpt_path (str | Path | None, optional): Path to a checkpoint to resume training from. Defaults to None.
+        evaluate (bool, optional): Whether to run validation and testing after training. Defaults to True.
+    """
+    log.info("Training model")
+    trainer.fit(model=model, datamodule=data)
+
+    log.info("Validating model")
+    metrics = trainer.validate(model=model, datamodule=data)
+    metric = metrics.get(monitor, None)
+
+    log.info("Testing model")
+    trainer.test(model=model, datamodule=data)
+
+    return metric
+
+
+def main() -> None:
+    """Main entry point for the training script.
+
+    Sets up Hydra configuration and runs the training task with the
+    specified configuration.
+    """
+    store(TrainCfg, name="config")
+    store.add_to_hydra_store()
+    task_fn = zen(train)  # TODO: Add pre_call=print_config
+    task_fn.hydra_main(config_path=None, config_name="config", version_base="1.3")
+
+
+if __name__ == "__main__":
+    main()
