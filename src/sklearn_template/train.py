@@ -2,6 +2,7 @@ import logging
 
 from hydra_zen import store, zen
 
+from lightning_hydra_zen_template.utils.print_config import print_config
 from sklearn_template.configs import TrainCfg
 from sklearn_template.core.datamodule import DataModule
 from sklearn_template.core.model import Model
@@ -25,12 +26,11 @@ def train(data: DataModule, model: Model, trainer: Trainer, monitor: str) -> flo
 
     log.info("Validating model")
     metrics = trainer.validate(model=model, datamodule=data)
-    metric = metrics.get(monitor, None)
 
     log.info("Testing model")
     trainer.test(model=model, datamodule=data)
 
-    return metric
+    return metrics.get(monitor, None)
 
 
 def main() -> None:
@@ -41,7 +41,7 @@ def main() -> None:
     """
     store(TrainCfg, name="config")
     store.add_to_hydra_store()
-    task_fn = zen(train)  # TODO: Add pre_call=print_config
+    task_fn = zen(train, pre_call=print_config)
     task_fn.hydra_main(config_path=None, config_name="config", version_base="1.3")
 
 

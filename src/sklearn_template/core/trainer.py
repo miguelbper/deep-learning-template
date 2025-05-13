@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import numpy as np
 from tabulate import tabulate
 
 from sklearn_template.core.datamodule import DataModule

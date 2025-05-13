@@ -3,6 +3,7 @@ from pathlib import Path
 
 from hydra_zen import store, zen
 
+from lightning_hydra_zen_template.utils.print_config import print_config
 from sklearn_template.configs import EvalCfg
 from sklearn_template.core.datamodule import DataModule
 from sklearn_template.core.model import Model
@@ -40,7 +41,7 @@ def main() -> None:
     """
     store(EvalCfg, name="config")
     store.add_to_hydra_store()
-    task_fn = zen(evaluate)  # TODO: Add pre_call=print_config
+    task_fn = zen(evaluate, pre_call=print_config)
     task_fn.hydra_main(config_path=None, config_name="config", version_base="1.3")
 
 
