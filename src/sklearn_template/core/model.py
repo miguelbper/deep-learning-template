@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from pathlib import Path
 
+import joblib
 import numpy as np
 import sklearn
 
@@ -57,9 +58,33 @@ class Model:
         return self.evaluate(X, y, prefix="test/")
 
     def save(self, path: str | Path) -> None:
-        """Save the model to the specified path."""
-        pass
+        """Save the model to the specified path.
+
+        If the model has a save_model() method (like XGBoost or LightGBM), use that.
+        Otherwise, use joblib to pickle the model.
+
+        Args:
+            path: Path where to save the model.
+        """
+        path = Path(path)
+
+        if hasattr(self.model, "save_model"):
+            self.model.save_model(str(path))
+        else:
+            joblib.dump(self.model, path)
 
     def load(self, path: str | Path) -> None:
-        """Load the model from the specified path."""
-        pass
+        """Load the model from the specified path.
+
+        If the model has a load_model() method (like XGBoost or LightGBM), use that.
+        Otherwise, use joblib to unpickle the model.
+
+        Args:
+            path: Path from where to load the model.
+        """
+        path = Path(path)
+
+        if hasattr(self.model, "load_model"):
+            self.model.load_model(str(path))
+        else:
+            self.model = joblib.load(path)
