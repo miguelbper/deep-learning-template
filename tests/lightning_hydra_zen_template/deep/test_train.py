@@ -63,6 +63,9 @@ def matrix_overrides(
     matmul_precision: str | None,
     compile: bool | None,
 ) -> OverrideDict:
+    if compile and accelerator == "mps":
+        pytest.skip("MPS device is not supported with torch.compile()")
+
     overrides = overrides.copy()
     overrides.update(
         {
