@@ -28,7 +28,9 @@ class Trainer:
         if self.ckpt_path:
             model.save(self.ckpt_path)
 
-    def validate(self, model: Model | None, datamodule: DataModule, ckpt_path: str | Path | None = None) -> dict[str, float]:
+    def validate(
+        self, model: Model | None, datamodule: DataModule, ckpt_path: str | Path | None = None
+    ) -> dict[str, float]:
         X, y = datamodule.validation_set()
         if model is None and ckpt_path is None:
             raise ValueError("Either model or ckpt_path must be provided")
@@ -38,7 +40,9 @@ class Trainer:
         self.print_metrics(metrics, "Validation")
         return metrics
 
-    def test(self, model: Model | None, datamodule: DataModule, ckpt_path: str | Path | None = None) -> dict[str, float]:
+    def test(
+        self, model: Model | None, datamodule: DataModule, ckpt_path: str | Path | None = None
+    ) -> dict[str, float]:
         X, y = datamodule.test_set()
         if model is None and ckpt_path is None:
             raise ValueError("Either model or ckpt_path must be provided")
