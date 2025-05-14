@@ -62,10 +62,10 @@ class TestDataModule:
         assert X_test.shape == (NUM_TEST_SAMPLES, NUM_FEATURES)
         assert y_test.shape == (NUM_TEST_SAMPLES,)
 
-    def test_incomplete_datamodule():
+    def test_incomplete_datamodule(self):
         with pytest.raises(TypeError):
             IncompleteDataModule()
 
-    def test_cannot_instantiate_base_datamodule():
+    def test_cannot_instantiate_base_datamodule(self):
         with pytest.raises(TypeError):
             DataModule()

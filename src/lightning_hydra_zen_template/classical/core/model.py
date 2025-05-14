@@ -58,33 +58,23 @@ class Model:
         return self.evaluate(X, y, prefix="test/")
 
     def save(self, path: str | Path) -> None:
-        """Save the model to the specified path.
-
-        If the model has a save_model() method (like XGBoost or LightGBM), use that.
-        Otherwise, use joblib to pickle the model.
+        """Save the entire Model object to the specified path.
 
         Args:
             path: Path where to save the model.
         """
         path = Path(path)
+        joblib.dump(self, path)
 
-        if hasattr(self.model, "save_model"):
-            self.model.save_model(str(path))
-        else:
-            joblib.dump(self.model, path)
-
-    def load(self, path: str | Path) -> None:
-        """Load the model from the specified path.
-
-        If the model has a load_model() method (like XGBoost or LightGBM), use that.
-        Otherwise, use joblib to unpickle the model.
+    @classmethod
+    def load(cls, path: str | Path) -> "Model":
+        """Load a Model object from the specified path.
 
         Args:
             path: Path from where to load the model.
+
+        Returns:
+            Model: The loaded model object.
         """
         path = Path(path)
-
-        if hasattr(self.model, "load_model"):
-            self.model.load_model(str(path))
-        else:
-            self.model = joblib.load(path)
+        return joblib.load(path)
