@@ -1,22 +1,30 @@
-from hydra_zen import make_config, make_custom_builds_fn
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score
+from hydra_zen import make_config
 
-from lightning_hydra_zen_template.classical.core.module import Model
-from lightning_hydra_zen_template.classical.core.trainer import Trainer
-from lightning_hydra_zen_template.classical.data.iris import IrisDataModule
-
-fbuilds = make_custom_builds_fn(populate_full_signature=True)
+from lightning_hydra_zen_template.classical.configs.groups.paths import PathsCfg
 
 TrainCfg = make_config(
-    data=fbuilds(IrisDataModule),
-    model=fbuilds(
-        Model,
-        model=fbuilds(LogisticRegression),
-        metrics=[
-            fbuilds(accuracy_score),
-        ],
-    ),
-    trainer=fbuilds(Trainer),
+    hydra_defaults=[
+        "_self_",
+        # Main components
+        {"data": "iris"},
+        {"model": "logistic"},
+        {"trainer": "default"},
+        # Overrides to main components
+        {"experiment": None},
+        {"hparams_search": None},
+        # Colored logging
+        {"override hydra/hydra_logging": "colorlog"},
+        {"override hydra/job_logging": "colorlog"},
+    ],
+    # Main components
+    data=None,
+    model=None,
+    trainer=None,
+    # Run configs
+    paths=PathsCfg,
+    task_name="train_iris",
+    tags=["dev"],
+    seed=42,
     monitor="val/accuracy_score",
+    mode="max",
 )

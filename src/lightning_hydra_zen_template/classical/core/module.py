@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 import joblib
@@ -97,9 +98,9 @@ class Module:
         y_pred = self(X)
         results = {}
         for metric in self.metrics:
-            metric_name = f"{prefix}{metric.__name__}"
+            metric_name = metric.func.__name__ if isinstance(metric, partial) else metric.__name__
             metric_value = metric(y, y_pred)
-            results[metric_name] = metric_value
+            results[f"{prefix}{metric_name}"] = metric_value
         return results
 
     def save(self, path: str | Path) -> None:

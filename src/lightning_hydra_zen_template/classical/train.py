@@ -4,19 +4,19 @@ from hydra_zen import store, zen
 
 from lightning_hydra_zen_template.classical.configs import TrainCfg
 from lightning_hydra_zen_template.classical.core.datamodule import DataModule
-from lightning_hydra_zen_template.classical.core.module import Model
+from lightning_hydra_zen_template.classical.core.module import Module
 from lightning_hydra_zen_template.classical.core.trainer import Trainer
-from lightning_hydra_zen_template.deep.utils.print_config import print_config
+from lightning_hydra_zen_template.classical.utils.print_config import print_config
 
 log = logging.getLogger(__name__)
 
 
-def train(data: DataModule, model: Model, trainer: Trainer, monitor: str) -> float | None:
+def train(data: DataModule, model: Module, trainer: Trainer, monitor: str) -> float | None:
     """Train, validate and test a scikit-learn model.
 
     Args:
         data (DataModule): The data module containing training, validation and test data.
-        model (Model): The model to train.
+        model (Module): The model to train.
         trainer (Trainer): The trainer instance.
         ckpt_path (str | Path | None, optional): Path to a checkpoint to resume training from. Defaults to None.
         evaluate (bool, optional): Whether to run validation and testing after training. Defaults to True.
