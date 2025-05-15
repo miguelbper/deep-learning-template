@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
 from lightning_hydra_zen_template.classical.core.datamodule import DataModule
-from lightning_hydra_zen_template.classical.core.model import Estimator, Metric, Model
+from lightning_hydra_zen_template.classical.core.module import Estimator, Metric, Model
 from lightning_hydra_zen_template.classical.core.trainer import Trainer
 
 NUM_TRAIN_SAMPLES = 10

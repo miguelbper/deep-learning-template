@@ -5,7 +5,7 @@ import pytest
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
-from lightning_hydra_zen_template.classical.core.model import Estimator, Metric, Model
+from lightning_hydra_zen_template.classical.core.module import Estimator, Metric, Model
 
 N = 10
 NUM_SAMPLES = N - 1

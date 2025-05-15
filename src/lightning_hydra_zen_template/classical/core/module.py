@@ -9,7 +9,7 @@ MetricFn = Callable[[ArrayLike, ArrayLike], float]
 Metrics = dict[str, float]
 
 
-class Model:
+class Module:
     def __init__(self, model: BaseEstimator, metrics: list[MetricFn]):
         self.model = model
         self.metrics = metrics
@@ -74,14 +74,14 @@ class Model:
         joblib.dump(self, path)
 
     @classmethod
-    def load(cls, path: str | Path) -> "Model":
+    def load(cls, path: str | Path) -> "Module":
         """Load a Model object from the specified path.
 
         Args:
             path: Path from where to load the model.
 
         Returns:
-            Model: The loaded model object.
+            Module: The loaded module object.
         """
         path = Path(path)
         return joblib.load(path)

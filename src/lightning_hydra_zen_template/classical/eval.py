@@ -5,7 +5,7 @@ from hydra_zen import store, zen
 
 from lightning_hydra_zen_template.classical.configs import EvalCfg
 from lightning_hydra_zen_template.classical.core.datamodule import DataModule
-from lightning_hydra_zen_template.classical.core.model import Model
+from lightning_hydra_zen_template.classical.core.module import Model
 from lightning_hydra_zen_template.classical.core.trainer import Trainer
 from lightning_hydra_zen_template.deep.utils.print_config import print_config
 
