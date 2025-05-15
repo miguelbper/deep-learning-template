@@ -39,6 +39,8 @@ class Module:
         Returns:
             ArrayLike: Model predictions
         """
+        if not self.trained:
+            raise RuntimeError("Model must be trained before prediction")
         return self.model.predict(X)
 
     def train(self, X: ArrayLike, y: ArrayLike) -> None:
@@ -91,13 +93,7 @@ class Module:
 
         Returns:
             Metrics: Dictionary with metric names (prefixed) as keys and their values
-
-        Raises:
-            RuntimeError: If the model has not been trained yet
         """
-        if not self.trained:
-            raise RuntimeError("Model must be trained before evaluation")
-
         y_pred = self(X)
         results = {}
         for metric in self.metrics:

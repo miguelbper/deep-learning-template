@@ -5,98 +5,128 @@ import pytest
 from numpy.typing import NDArray
 from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 
 from lightning_hydra_zen_template.classical.core.module import MetricFn, Module
 
-N = 10
-NUM_SAMPLES = N - 1
-NUM_FEATURES = N
+N = 5
+RNG = np.random.RandomState(42)
 
 
 @pytest.fixture
 def X() -> NDArray:
-    return np.random.rand(NUM_SAMPLES, NUM_FEATURES)
+    return RNG.rand(N, N)
 
 
 @pytest.fixture
 def y() -> NDArray:
-    return np.random.rand(NUM_SAMPLES)
+    return RNG.rand(N)
 
 
 @pytest.fixture
-def linreg(X: NDArray, y: NDArray) -> BaseEstimator:
-    lin_reg = LinearRegression()
-    lin_reg.fit(X, y)
-    return lin_reg
+def linreg() -> BaseEstimator:
+    return LinearRegression(fit_intercept=True)
 
 
 @pytest.fixture
-def mse() -> MetricFn:
-    return mean_squared_error
+def metrics() -> list[MetricFn]:
+    return [mean_squared_error, r2_score]
 
 
 @pytest.fixture
-def model(linreg: BaseEstimator, mse: MetricFn) -> Module:
-    return Module(linreg, [mse])
+def model(linreg: BaseEstimator, metrics: list[MetricFn]) -> Module:
+    return Module(linreg, metrics)
 
 
-class TestModel:
-    def test_model_init(self, linreg: BaseEstimator, mse: MetricFn) -> None:
-        model = Module(linreg, [mse])
-        assert isinstance(model, Module)
+class TestModulePrediction:
+    def test_model_call_untrained(self, model: Module, X: NDArray) -> None:
+        with pytest.raises(RuntimeError, match="Model must be trained before prediction"):
+            model(X)
 
-    def test_model_call(self, model: Module, X: NDArray, y: NDArray) -> None:
-        y_pred_0 = model(X)
-        y_pred_1 = model.model.predict(X)
-        assert np.allclose(y_pred_0, y_pred_1)
-
-    def test_model_train(self, model: Module, X: NDArray, y: NDArray) -> None:
-        weights_0 = model.model.coef_
-        bias_0 = model.model.intercept_
-
+    def test_model_prediction_matches_base(self, model: Module, X: NDArray, y: NDArray) -> None:
         model.train(X, y)
-        weights_1 = model.model.coef_
-        bias_1 = model.model.intercept_
+        y_pred_module = model(X)
+        y_pred_base = model.model.predict(X)
+        assert np.allclose(y_pred_module, y_pred_base)
 
-        assert np.allclose(weights_0, weights_1)
-        assert np.allclose(bias_0, bias_1)
-        assert isinstance(weights_0, np.ndarray)
-        assert isinstance(bias_0, float)
 
-    def test_model_evaluate(self, model: Module, X: NDArray, y: NDArray) -> None:
+class TestModuleTraining:
+    def test_model_train_updates_state(self, model: Module, X: NDArray, y: NDArray) -> None:
+        assert not model.trained
+        model.train(X, y)
+        assert model.trained
+
+    def test_model_train_perfect_fit(self, model: Module, X: NDArray, y: NDArray) -> None:
+        model.train(X, y)
+        y_pred = model(X)
+        assert np.allclose(y_pred, y)
+
+    def test_model_retrain_updates_weights(self, model: Module, X: NDArray, y: NDArray) -> None:
+        model.train(X, y)
+        weights_1 = model.model.coef_.copy()
+
+        X_new = RNG.rand(N, N)
+        y_new = RNG.rand(N)
+        model.train(X_new, y_new)
+        weights_2 = model.model.coef_.copy()
+
+        assert not np.allclose(weights_1, weights_2)
+
+    def test_model_retrain_same_weights(self, model: Module, X: NDArray, y: NDArray) -> None:
+        model.train(X, y)
+        weights_1 = model.model.coef_.copy()
+        model.train(X, y)
+        weights_2 = model.model.coef_.copy()
+        assert np.allclose(weights_1, weights_2)
+
+
+class TestModuleEvaluation:
+    def test_evaluate_untrained_raises(self, model: Module, X: NDArray, y: NDArray) -> None:
+        with pytest.raises(RuntimeError, match="Model must be trained before prediction"):
+            model.evaluate(X, y, prefix="test/")
+
+    def test_evaluate_with_multiple_metrics(self, model: Module, X: NDArray, y: NDArray) -> None:
+        model.train(X, y)
         results = model.evaluate(X, y, prefix="custom_")
-        assert isinstance(results, dict)
-        assert len(results) == 1
+        assert len(results) == 2  # We have MSE and R2
         assert "custom_mean_squared_error" in results
-        assert np.isclose(results["custom_mean_squared_error"], 0.0)
+        assert "custom_r2_score" in results
 
-    def test_model_validate(self, model: Module, X: NDArray, y: NDArray) -> None:
-        val_results = model.validate(X, y)
-        assert isinstance(val_results, dict)
-        assert len(val_results) == 1
-        assert "val/mean_squared_error" in val_results
-        assert np.isclose(val_results["val/mean_squared_error"], 0.0)
+    def test_validate_returns_correct_prefix(self, model: Module, X: NDArray, y: NDArray) -> None:
+        model.train(X, y)
+        results = model.validate(X, y)
+        assert all(k.startswith("val/") for k in results)
 
-    def test_model_test(self, model: Module, X: NDArray, y: NDArray) -> None:
-        test_results = model.test(X, y)
-        assert isinstance(test_results, dict)
-        assert len(test_results) == 1
-        assert "test/mean_squared_error" in test_results
-        assert np.isclose(test_results["test/mean_squared_error"], 0.0)
+    def test_test_returns_correct_prefix(self, model: Module, X: NDArray, y: NDArray) -> None:
+        model.train(X, y)
+        results = model.test(X, y)
+        assert all(k.startswith("test/") for k in results)
 
-    def test_model_save(self, model: Module, tmp_path: Path) -> None:
-        save_path = tmp_path / "model.pkl"
-        model.save(save_path)
-        assert save_path.exists()
 
-    def test_model_load(self, model: Module, X: NDArray, tmp_path: Path) -> None:
-        save_path = tmp_path / "model.pkl"
+class TestModuleSerialization:
+    def test_save_load_untrained(self, model: Module, tmp_path: Path) -> None:
+        save_path = tmp_path / "untrained_model.pkl"
         model.save(save_path)
         loaded_model = Module.load(save_path)
-        assert isinstance(loaded_model, Module)
+        assert not loaded_model.trained
+        assert len(loaded_model.metrics) == len(model.metrics)
+
+    def test_save_load_trained(self, model: Module, X: NDArray, y: NDArray, tmp_path: Path) -> None:
+        model.train(X, y)
+        save_path = tmp_path / "trained_model.pkl"
+        model.save(save_path)
+
+        loaded_model = Module.load(save_path)
+        assert loaded_model.trained
         assert np.allclose(model.model.coef_, loaded_model.model.coef_)
         assert np.allclose(model.model.intercept_, loaded_model.model.intercept_)
         assert np.allclose(model(X), loaded_model(X))
+
+    def test_save_load_preserves_metrics(self, model: Module, tmp_path: Path) -> None:
+        save_path = tmp_path / "model_with_metrics.pkl"
+        model.save(save_path)
+        loaded_model = Module.load(save_path)
+
         assert len(model.metrics) == len(loaded_model.metrics)
-        assert model.metrics[0].__name__ == loaded_model.metrics[0].__name__
+        for m1, m2 in zip(model.metrics, loaded_model.metrics, strict=False):
+            assert m1.__name__ == m2.__name__
