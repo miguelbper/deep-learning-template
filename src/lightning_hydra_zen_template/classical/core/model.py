@@ -2,27 +2,34 @@ from collections.abc import Callable
 from pathlib import Path
 
 import joblib
-import numpy as np
-import sklearn
+from numpy.typing import ArrayLike
+from sklearn.base import BaseEstimator
 
-Estimator = sklearn.base.BaseEstimator
-Metric = Callable[[np.ndarray, np.ndarray], float]
+MetricFn = Callable[[ArrayLike, ArrayLike], float]
+Metrics = dict[str, float]
 
 
 class Model:
-    def __init__(self, model: Estimator, metrics: list[Metric]):
+    def __init__(self, model: BaseEstimator, metrics: list[MetricFn]):
         self.model = model
         self.metrics = metrics
+        self._trained = False
 
-    def __call__(self, X: np.ndarray) -> np.ndarray:
+    @property
+    def trained(self) -> bool:
+        """Whether the model has been trained."""
+        return self._trained
+
+    def __call__(self, X: ArrayLike) -> ArrayLike:
         """Make predictions on input data X."""
         return self.model.predict(X)
 
-    def train(self, X: np.ndarray, y: np.ndarray) -> None:
+    def train(self, X: ArrayLike, y: ArrayLike) -> None:
         """Train the model on input features X and target y."""
         self.model.fit(X, y)
+        self._trained = True
 
-    def evaluate(self, X: np.ndarray, y: np.ndarray, prefix: str) -> dict[str, float]:
+    def evaluate(self, X: ArrayLike, y: ArrayLike, prefix: str) -> Metrics:
         """Evaluate the model on input features X and target y.
 
         Args:
@@ -41,7 +48,7 @@ class Model:
             results[metric_name] = metric_value
         return results
 
-    def validate(self, X: np.ndarray, y: np.ndarray) -> dict[str, float]:
+    def validate(self, X: ArrayLike, y: ArrayLike) -> Metrics:
         """Validate the model on input features X and target y.
 
         Returns:
@@ -49,7 +56,7 @@ class Model:
         """
         return self.evaluate(X, y, prefix="val/")
 
-    def test(self, X: np.ndarray, y: np.ndarray) -> dict[str, float]:
+    def test(self, X: ArrayLike, y: ArrayLike) -> Metrics:
         """Test the model on input features X and target y.
 
         Returns:
