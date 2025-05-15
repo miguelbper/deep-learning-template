@@ -3,10 +3,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 from numpy.typing import NDArray
+from sklearn.base import BaseEstimator
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
-from lightning_hydra_zen_template.classical.core.module import Estimator, Metric, Model
+from lightning_hydra_zen_template.classical.core.module import MetricFn, Module
 
 N = 10
 NUM_SAMPLES = N - 1
@@ -24,33 +25,33 @@ def y() -> NDArray:
 
 
 @pytest.fixture
-def linreg(X: NDArray, y: NDArray) -> Estimator:
+def linreg(X: NDArray, y: NDArray) -> BaseEstimator:
     lin_reg = LinearRegression()
     lin_reg.fit(X, y)
     return lin_reg
 
 
 @pytest.fixture
-def mse() -> Metric:
+def mse() -> MetricFn:
     return mean_squared_error
 
 
 @pytest.fixture
-def model(linreg: Estimator, mse: Metric) -> Model:
-    return Model(linreg, [mse])
+def model(linreg: BaseEstimator, mse: MetricFn) -> Module:
+    return Module(linreg, [mse])
 
 
 class TestModel:
-    def test_model_init(self, linreg: Estimator, mse: Metric) -> None:
-        model = Model(linreg, [mse])
-        assert isinstance(model, Model)
+    def test_model_init(self, linreg: BaseEstimator, mse: MetricFn) -> None:
+        model = Module(linreg, [mse])
+        assert isinstance(model, Module)
 
-    def test_model_call(self, model: Model, X: NDArray, y: NDArray) -> None:
+    def test_model_call(self, model: Module, X: NDArray, y: NDArray) -> None:
         y_pred_0 = model(X)
         y_pred_1 = model.model.predict(X)
         assert np.allclose(y_pred_0, y_pred_1)
 
-    def test_model_train(self, model: Model, X: NDArray, y: NDArray) -> None:
+    def test_model_train(self, model: Module, X: NDArray, y: NDArray) -> None:
         weights_0 = model.model.coef_
         bias_0 = model.model.intercept_
 
@@ -63,37 +64,37 @@ class TestModel:
         assert isinstance(weights_0, np.ndarray)
         assert isinstance(bias_0, float)
 
-    def test_model_evaluate(self, model: Model, X: NDArray, y: NDArray) -> None:
+    def test_model_evaluate(self, model: Module, X: NDArray, y: NDArray) -> None:
         results = model.evaluate(X, y, prefix="custom_")
         assert isinstance(results, dict)
         assert len(results) == 1
         assert "custom_mean_squared_error" in results
         assert np.isclose(results["custom_mean_squared_error"], 0.0)
 
-    def test_model_validate(self, model: Model, X: NDArray, y: NDArray) -> None:
+    def test_model_validate(self, model: Module, X: NDArray, y: NDArray) -> None:
         val_results = model.validate(X, y)
         assert isinstance(val_results, dict)
         assert len(val_results) == 1
         assert "val/mean_squared_error" in val_results
         assert np.isclose(val_results["val/mean_squared_error"], 0.0)
 
-    def test_model_test(self, model: Model, X: NDArray, y: NDArray) -> None:
+    def test_model_test(self, model: Module, X: NDArray, y: NDArray) -> None:
         test_results = model.test(X, y)
         assert isinstance(test_results, dict)
         assert len(test_results) == 1
         assert "test/mean_squared_error" in test_results
         assert np.isclose(test_results["test/mean_squared_error"], 0.0)
 
-    def test_model_save(self, model: Model, tmp_path: Path) -> None:
+    def test_model_save(self, model: Module, tmp_path: Path) -> None:
         save_path = tmp_path / "model.pkl"
         model.save(save_path)
         assert save_path.exists()
 
-    def test_model_load(self, model: Model, X: NDArray, tmp_path: Path) -> None:
+    def test_model_load(self, model: Module, X: NDArray, tmp_path: Path) -> None:
         save_path = tmp_path / "model.pkl"
         model.save(save_path)
-        loaded_model = Model.load(save_path)
-        assert isinstance(loaded_model, Model)
+        loaded_model = Module.load(save_path)
+        assert isinstance(loaded_model, Module)
         assert np.allclose(model.model.coef_, loaded_model.model.coef_)
         assert np.allclose(model.model.intercept_, loaded_model.model.intercept_)
         assert np.allclose(model(X), loaded_model(X))
