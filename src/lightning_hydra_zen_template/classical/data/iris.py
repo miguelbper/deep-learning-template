@@ -1,4 +1,4 @@
-import numpy as np
+from numpy.typing import NDArray
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -75,7 +75,7 @@ class IrisDataModule(DataModule):
         self._X_test = X_test
         self._y_test = y_test
 
-    def train_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def train_set(self) -> tuple[NDArray, NDArray]:
         """Return the training data.
 
         Returns:
@@ -83,7 +83,7 @@ class IrisDataModule(DataModule):
         """
         return self._X_train, self._y_train
 
-    def validation_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def validation_set(self) -> tuple[NDArray, NDArray]:
         """Return the validation data.
 
         Returns:
@@ -91,7 +91,7 @@ class IrisDataModule(DataModule):
         """
         return self._X_val, self._y_val
 
-    def test_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def test_set(self) -> tuple[NDArray, NDArray]:
         """Return the test data.
 
         Returns:

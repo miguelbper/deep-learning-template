@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
@@ -13,17 +14,17 @@ NUM_FEATURES = N
 
 
 @pytest.fixture
-def X() -> np.ndarray:
+def X() -> NDArray:
     return np.random.rand(NUM_SAMPLES, NUM_FEATURES)
 
 
 @pytest.fixture
-def y() -> np.ndarray:
+def y() -> NDArray:
     return np.random.rand(NUM_SAMPLES)
 
 
 @pytest.fixture
-def linreg(X: np.ndarray, y: np.ndarray) -> Estimator:
+def linreg(X: NDArray, y: NDArray) -> Estimator:
     lin_reg = LinearRegression()
     lin_reg.fit(X, y)
     return lin_reg
@@ -44,12 +45,12 @@ class TestModel:
         model = Model(linreg, [mse])
         assert isinstance(model, Model)
 
-    def test_model_call(self, model: Model, X: np.ndarray, y: np.ndarray) -> None:
+    def test_model_call(self, model: Model, X: NDArray, y: NDArray) -> None:
         y_pred_0 = model(X)
         y_pred_1 = model.model.predict(X)
         assert np.allclose(y_pred_0, y_pred_1)
 
-    def test_model_train(self, model: Model, X: np.ndarray, y: np.ndarray) -> None:
+    def test_model_train(self, model: Model, X: NDArray, y: NDArray) -> None:
         weights_0 = model.model.coef_
         bias_0 = model.model.intercept_
 
@@ -62,21 +63,21 @@ class TestModel:
         assert isinstance(weights_0, np.ndarray)
         assert isinstance(bias_0, float)
 
-    def test_model_evaluate(self, model: Model, X: np.ndarray, y: np.ndarray) -> None:
+    def test_model_evaluate(self, model: Model, X: NDArray, y: NDArray) -> None:
         results = model.evaluate(X, y, prefix="custom_")
         assert isinstance(results, dict)
         assert len(results) == 1
         assert "custom_mean_squared_error" in results
         assert np.isclose(results["custom_mean_squared_error"], 0.0)
 
-    def test_model_validate(self, model: Model, X: np.ndarray, y: np.ndarray) -> None:
+    def test_model_validate(self, model: Model, X: NDArray, y: NDArray) -> None:
         val_results = model.validate(X, y)
         assert isinstance(val_results, dict)
         assert len(val_results) == 1
         assert "val/mean_squared_error" in val_results
         assert np.isclose(val_results["val/mean_squared_error"], 0.0)
 
-    def test_model_test(self, model: Model, X: np.ndarray, y: np.ndarray) -> None:
+    def test_model_test(self, model: Model, X: NDArray, y: NDArray) -> None:
         test_results = model.test(X, y)
         assert isinstance(test_results, dict)
         assert len(test_results) == 1
@@ -88,7 +89,7 @@ class TestModel:
         model.save(save_path)
         assert save_path.exists()
 
-    def test_model_load(self, model: Model, X: np.ndarray, tmp_path: Path) -> None:
+    def test_model_load(self, model: Model, X: NDArray, tmp_path: Path) -> None:
         save_path = tmp_path / "model.pkl"
         model.save(save_path)
         loaded_model = Model.load(save_path)

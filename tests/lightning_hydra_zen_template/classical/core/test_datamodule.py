@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 from lightning_hydra_zen_template.classical.core.datamodule import DataModule
 
@@ -20,21 +21,21 @@ y_test = np.random.randint(0, NUM_CLASSES, NUM_TEST_SAMPLES)
 
 
 class CompleteDataModule(DataModule):
-    def train_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def train_set(self) -> tuple[NDArray, NDArray]:
         return X_train, y_train
 
-    def validation_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def validation_set(self) -> tuple[NDArray, NDArray]:
         return X_val, y_val
 
-    def test_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def test_set(self) -> tuple[NDArray, NDArray]:
         return X_test, y_test
 
 
 class IncompleteDataModule(DataModule):
-    def train_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def train_set(self) -> tuple[NDArray, NDArray]:
         return X_train, y_train
 
-    def validation_set(self) -> tuple[np.ndarray, np.ndarray]:
+    def validation_set(self) -> tuple[NDArray, NDArray]:
         return X_val, y_val
 
     # test_set method is intentionally missing
